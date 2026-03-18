@@ -15,15 +15,16 @@
 </head>
 <body>
 
-<!-- Three.js -->
+<!-- THREE -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
-<!-- 正确版本（必须用 jsm + module） -->
+<!-- GUI（关键：非module版本） -->
+<script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+
 <script type="module">
 
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-import GUI from 'https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm';
 
 // ===== 场景 =====
 const scene = new THREE.Scene();
@@ -57,14 +58,13 @@ loader.load('./models/baji.glb', (gltf) => {
   model = gltf.scene;
   scene.add(model);
 
-  // 自动居中
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   model.position.sub(center);
 });
 
-// ===== 控制面板 =====
-const gui = new GUI();
+// ===== GUI（关键修复点）=====
+const gui = new lil.GUI();
 
 const params = {
   rotationY: 0,
@@ -77,19 +77,19 @@ const params = {
   cameraY: 1
 };
 
-const modelFolder = gui.addFolder('模型');
-modelFolder.add(params, 'rotationY', -Math.PI, Math.PI, 0.01);
-modelFolder.add(params, 'rotationX', -Math.PI, Math.PI, 0.01);
-modelFolder.add(params, 'posX', -5, 5, 0.01);
-modelFolder.add(params, 'posY', -5, 5, 0.01);
-modelFolder.add(params, 'posZ', -5, 5, 0.01);
-modelFolder.add(params, 'scale', 0.1, 5, 0.01);
+const f1 = gui.addFolder('模型');
+f1.add(params, 'rotationY', -Math.PI, Math.PI, 0.01);
+f1.add(params, 'rotationX', -Math.PI, Math.PI, 0.01);
+f1.add(params, 'posX', -5, 5, 0.01);
+f1.add(params, 'posY', -5, 5, 0.01);
+f1.add(params, 'posZ', -5, 5, 0.01);
+f1.add(params, 'scale', 0.1, 5, 0.01);
 
-const camFolder = gui.addFolder('相机');
-camFolder.add(params, 'cameraZ', 1, 10, 0.01);
-camFolder.add(params, 'cameraY', -5, 5, 0.01);
+const f2 = gui.addFolder('相机');
+f2.add(params, 'cameraZ', 1, 10, 0.01);
+f2.add(params, 'cameraY', -5, 5, 0.01);
 
-// ===== 动画循环 =====
+// ===== 动画 =====
 function animate() {
   requestAnimationFrame(animate);
 
