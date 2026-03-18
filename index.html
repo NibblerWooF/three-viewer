@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BAJI Viewer</title>
   <style>
     :root {
-      color-scheme: dark;
-      --bg-top: #09111f;
-      --bg-bottom: #010409;
-      --panel-bg: rgba(6, 10, 18, 0.72);
-      --panel-border: rgba(170, 220, 255, 0.18);
-      --text-main: #eef6ff;
-      --text-sub: #9cb2c9;
-      --accent: #7ed0ff;
+      color-scheme: light;
+      --bg-main: #d9d9d9;
+      --bg-soft: #ececec;
+      --panel-bg: rgba(255, 255, 255, 0.78);
+      --panel-border: rgba(0, 0, 0, 0.08);
+      --text-main: #1c2430;
+      --text-sub: #576273;
+      --accent: #2e6ea6;
       --error: #ff7b7b;
     }
 
@@ -26,8 +26,8 @@
       height: 100%;
       overflow: hidden;
       background:
-        radial-gradient(circle at top, rgba(70, 118, 181, 0.28), transparent 40%),
-        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.6), transparent 38%),
+        linear-gradient(180deg, var(--bg-soft), var(--bg-main));
       color: var(--text-main);
       font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
     }
@@ -47,7 +47,7 @@
       border-radius: 16px;
       background: var(--panel-bg);
       backdrop-filter: blur(14px);
-      box-shadow: 0 14px 48px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
       pointer-events: none;
     }
 
@@ -55,8 +55,7 @@
       margin: 0 0 6px;
       font-size: 14px;
       font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .hud-text {
@@ -73,12 +72,30 @@
     .hud-text.error {
       color: var(--error);
     }
+
+    .lil-gui.root {
+      --background-color: rgba(255, 255, 255, 0.86);
+      --title-background-color: rgba(240, 240, 240, 0.98);
+      --title-text-color: #1c2430;
+      --widget-color: #dce4eb;
+      --hover-color: #cfd9e2;
+      --focus-color: #2e6ea6;
+      --text-color: #1c2430;
+      --number-color: #2e6ea6;
+      --string-color: #2e6ea6;
+      --font-size: 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      overflow: hidden;
+    }
   </style>
 </head>
 <body>
   <div class="hud">
     <p class="hud-title">BAJI Viewer</p>
-    <p id="statusText" class="hud-text">Loading model...</p>
+    <p id="statusText" class="hud-text">正在加载模型...</p>
   </div>
 
   <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
@@ -88,7 +105,7 @@
 
   <script>
     const scene = new THREE.Scene();
-    scene.background = null;
+    scene.background = new THREE.Color(0xd9d9d9);
 
     const statusText = document.getElementById('statusText');
     const clock = new THREE.Clock();
@@ -100,7 +117,7 @@
       1000
     );
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     setRendererColorSpace(renderer);
@@ -117,14 +134,18 @@
     controls.dampingFactor = 0.06;
     controls.target.set(0, 1, 0);
 
-    const hemiLight = new THREE.HemisphereLight(0xdff3ff, 0x182030, 1.4);
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xcfcfcf, 1.65);
     scene.add(hemiLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 2.4);
-    dirLight.position.set(3, 5, 2);
+    const dirLight = new THREE.DirectionalLight(0xfff8ee, 1.1);
+    dirLight.position.set(4, 6, 5);
     scene.add(dirLight);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+    const fillLight = new THREE.DirectionalLight(0xe9eef5, 0.55);
+    fillLight.position.set(-4, 3, -2);
+    scene.add(fillLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
     let modelRoot = null;
@@ -148,10 +169,11 @@
       cameraX: 0,
       cameraY: 1.2,
       cameraZ: 5,
-      lightIntensity: 2.4,
-      hemiIntensity: 1.4,
-      ambientIntensity: 0.45,
-      animation: 'No animation',
+      lightIntensity: 1.1,
+      hemiIntensity: 1.65,
+      ambientIntensity: 0.85,
+      fillIntensity: 0.55,
+      animation: '无动画',
       play: true,
       loop: true,
       speed: 1,
@@ -176,49 +198,50 @@
       }
     };
 
-    const gui = new lil.GUI({ title: 'Control Panel', width: 340 });
+    const gui = new lil.GUI({ title: '控制面板', width: 340 });
     gui.domElement.style.marginTop = '10px';
 
-    const modelFolder = gui.addFolder('Model');
+    const modelFolder = gui.addFolder('模型');
     const modelControllers = [
-      modelFolder.add(params, 'rotationX', -Math.PI, Math.PI, 0.01).name('Rotate X'),
-      modelFolder.add(params, 'rotationY', -Math.PI, Math.PI, 0.01).name('Rotate Y'),
-      modelFolder.add(params, 'rotationZ', -Math.PI, Math.PI, 0.01).name('Rotate Z'),
-      modelFolder.add(params, 'posX', -5, 5, 0.01).name('Position X'),
-      modelFolder.add(params, 'posY', -5, 5, 0.01).name('Position Y'),
-      modelFolder.add(params, 'posZ', -5, 5, 0.01).name('Position Z'),
-      modelFolder.add(params, 'scale', 0.1, 5, 0.01).name('Scale'),
-      modelFolder.add(params, 'autoRotate').name('Auto Rotate'),
-      modelFolder.add(params, 'autoRotateSpeed', -0.08, 0.08, 0.001).name('Rotate Speed')
+      modelFolder.add(params, 'rotationX', -Math.PI, Math.PI, 0.01).name('旋转 X'),
+      modelFolder.add(params, 'rotationY', -Math.PI, Math.PI, 0.01).name('旋转 Y'),
+      modelFolder.add(params, 'rotationZ', -Math.PI, Math.PI, 0.01).name('旋转 Z'),
+      modelFolder.add(params, 'posX', -5, 5, 0.01).name('位置 X'),
+      modelFolder.add(params, 'posY', -5, 5, 0.01).name('位置 Y'),
+      modelFolder.add(params, 'posZ', -5, 5, 0.01).name('位置 Z'),
+      modelFolder.add(params, 'scale', 0.1, 5, 0.01).name('缩放'),
+      modelFolder.add(params, 'autoRotate').name('自动旋转'),
+      modelFolder.add(params, 'autoRotateSpeed', -0.08, 0.08, 0.001).name('旋转速度')
     ];
-    modelFolder.add(params, 'resetModel').name('Reset Model');
+    modelFolder.add(params, 'resetModel').name('重置模型');
     modelFolder.open();
 
-    const cameraFolder = gui.addFolder('Camera');
+    const cameraFolder = gui.addFolder('相机');
     const cameraControllers = [
-      cameraFolder.add(params, 'cameraX', -10, 10, 0.01).name('Camera X'),
-      cameraFolder.add(params, 'cameraY', -5, 10, 0.01).name('Camera Y'),
-      cameraFolder.add(params, 'cameraZ', 1, 20, 0.01).name('Camera Z')
+      cameraFolder.add(params, 'cameraX', -10, 10, 0.01).name('相机 X'),
+      cameraFolder.add(params, 'cameraY', -5, 10, 0.01).name('相机 Y'),
+      cameraFolder.add(params, 'cameraZ', 1, 20, 0.01).name('相机 Z')
     ];
-    cameraFolder.add(params, 'resetCamera').name('Reset Camera');
+    cameraFolder.add(params, 'resetCamera').name('重置相机');
     cameraFolder.open();
 
-    const lightFolder = gui.addFolder('Lights');
-    lightFolder.add(params, 'lightIntensity', 0, 6, 0.01).name('Key Light');
-    lightFolder.add(params, 'hemiIntensity', 0, 6, 0.01).name('Sky Light');
-    lightFolder.add(params, 'ambientIntensity', 0, 3, 0.01).name('Ambient');
+    const lightFolder = gui.addFolder('光照');
+    lightFolder.add(params, 'lightIntensity', 0, 4, 0.01).name('主光');
+    lightFolder.add(params, 'fillIntensity', 0, 3, 0.01).name('补光');
+    lightFolder.add(params, 'hemiIntensity', 0, 4, 0.01).name('半球光');
+    lightFolder.add(params, 'ambientIntensity', 0, 3, 0.01).name('环境光');
 
-    const animationFolder = gui.addFolder('Animation');
+    const animationFolder = gui.addFolder('动画');
     const animationStateController = animationFolder
-      .add(params, 'animation', ['No animation'])
-      .name('Clip')
+      .add(params, 'animation', ['无动画'])
+      .name('片段')
       .onChange((clipName) => {
         if (!clipsReady) return;
         playClipByName(clipName);
       });
-    animationFolder.add(params, 'play').name('Play').onChange(updatePlaybackState);
-    animationFolder.add(params, 'loop').name('Loop').onChange(updatePlaybackState);
-    animationFolder.add(params, 'speed', 0, 3, 0.01).name('Speed').onChange(updatePlaybackState);
+    animationFolder.add(params, 'play').name('播放').onChange(updatePlaybackState);
+    animationFolder.add(params, 'loop').name('循环').onChange(updatePlaybackState);
+    animationFolder.add(params, 'speed', 0, 3, 0.01).name('速度').onChange(updatePlaybackState);
     animationFolder.open();
 
     const loader = new THREE.GLTFLoader();
@@ -237,17 +260,17 @@
         buildAnimationControls(animationClips);
 
         statusText.textContent = animationClips.length
-          ? `Model ready. Found ${animationClips.length} animation clip(s).`
-          : 'Model ready. No animation clips found.';
+          ? `模型加载完成，检测到 ${animationClips.length} 个动画片段。`
+          : '模型加载完成，未检测到动画片段。';
       },
       (event) => {
         if (!event.total) return;
         const progress = ((event.loaded / event.total) * 100).toFixed(0);
-        statusText.textContent = `Loading model... ${progress}%`;
+        statusText.textContent = `正在加载模型... ${progress}%`;
       },
       (error) => {
-        console.error('GLB load failed:', error);
-        statusText.textContent = 'Model load failed. Check models/baji.glb.';
+        console.error('GLB 加载失败:', error);
+        statusText.textContent = '模型加载失败，请检查 models/baji.glb 路径。';
         statusText.classList.add('error');
       }
     );
@@ -275,8 +298,8 @@
     function buildAnimationControls(clips) {
       if (!clips.length || !modelRoot) {
         clipsReady = false;
-        params.animation = 'No animation';
-        animationStateController.options(['No animation']);
+        params.animation = '无动画';
+        animationStateController.options(['无动画']);
         animationStateController.updateDisplay();
         return;
       }
@@ -284,7 +307,7 @@
       mixer = new THREE.AnimationMixer(modelRoot);
       clipsReady = true;
 
-      const clipNames = clips.map((clip, index) => clip.name || `Clip ${index + 1}`);
+      const clipNames = clips.map((clip, index) => clip.name || `动画 ${index + 1}`);
       params.animation = clipNames[0];
       animationStateController.options(clipNames);
       animationStateController.updateDisplay();
@@ -295,7 +318,7 @@
       if (!mixer || !animationClips.length) return;
 
       const clipIndex = animationClips.findIndex((clip, index) => {
-        const currentName = clip.name || `Clip ${index + 1}`;
+        const currentName = clip.name || `动画 ${index + 1}`;
         return currentName === clipName;
       });
 
@@ -353,6 +376,7 @@
 
       camera.position.set(params.cameraX, params.cameraY, params.cameraZ);
       dirLight.intensity = params.lightIntensity;
+      fillLight.intensity = params.fillIntensity;
       hemiLight.intensity = params.hemiIntensity;
       ambientLight.intensity = params.ambientIntensity;
 
