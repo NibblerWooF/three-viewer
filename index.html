@@ -98,11 +98,41 @@
     .lil-gui .title {
       color: #1c2430;
       font-weight: 700;
+      opacity: 1;
     }
 
     .lil-gui .name {
       color: #1c2430;
       font-weight: 600;
+      opacity: 1;
+    }
+
+    .lil-gui .controller {
+      color: #1c2430;
+    }
+
+    .lil-gui .controller * {
+      opacity: 1;
+    }
+
+    .lil-gui .controller.disabled,
+    .lil-gui .controller.disabled * {
+      opacity: 1 !important;
+    }
+
+    .lil-gui .folder .title,
+    .lil-gui .folder .name,
+    .lil-gui .controller .name {
+      color: #1c2430 !important;
+      opacity: 1 !important;
+      text-shadow: none;
+    }
+
+    .lil-gui .controller.boolean .name,
+    .lil-gui .controller.function .name,
+    .lil-gui .controller.option .name,
+    .lil-gui .controller.number .name {
+      color: #1c2430 !important;
     }
 
     .lil-gui .controller.option .display,
