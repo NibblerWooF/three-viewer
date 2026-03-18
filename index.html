@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>BAJI Viewer FINAL</title>
+  <title>BAJI FINAL FIX</title>
 
   <style>
     body {
@@ -15,13 +15,13 @@
 <body>
 
 <!-- THREE -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
-<!-- OrbitControls -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<!-- 控制器 -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
 
-<!-- GLTFLoader -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+<!-- GLTF -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/loaders/GLTFLoader.js"></script>
 
 <!-- GUI -->
 <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
@@ -58,20 +58,17 @@ loader.load('./models/baji.glb', function(gltf) {
   model = gltf.scene;
   scene.add(model);
 
-  // 居中
   const box = new THREE.Box3().setFromObject(model);
   const center = box.getCenter(new THREE.Vector3());
   model.position.sub(center);
 });
 
 // ===== GUI =====
-const gui = new lil.GUI({ width: 320 });
+const gui = new lil.GUI({ width: 300 });
 
-// 强制放大 + 显眼
 gui.domElement.style.transform = 'scale(1.3)';
 gui.domElement.style.transformOrigin = 'top right';
-gui.domElement.style.background = 'rgba(0,0,0,0.85)';
-gui.domElement.style.border = '2px solid rgba(255,255,255,0.2)';
+gui.domElement.style.background = 'rgba(0,0,0,0.8)';
 
 // 参数
 const params = {
