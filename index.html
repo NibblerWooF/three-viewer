@@ -77,8 +77,8 @@
       --background-color: rgba(255, 255, 255, 0.86);
       --title-background-color: rgba(240, 240, 240, 0.98);
       --title-text-color: #1c2430;
-      --widget-color: #dce4eb;
-      --hover-color: #cfd9e2;
+      --widget-color: #4c4c4c;
+      --hover-color: #5a5a5a;
       --focus-color: #2e6ea6;
       --text-color: #1c2430;
       --number-color: #2e6ea6;
@@ -89,6 +89,43 @@
       border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 14px;
       overflow: hidden;
+    }
+
+    .lil-gui {
+      color: #1c2430;
+    }
+
+    .lil-gui .title {
+      color: #1c2430;
+      font-weight: 700;
+    }
+
+    .lil-gui .name {
+      color: #1c2430;
+      font-weight: 600;
+    }
+
+    .lil-gui .controller.option .display,
+    .lil-gui input,
+    .lil-gui select,
+    .lil-gui button {
+      color: #ffffff;
+    }
+
+    .lil-gui button {
+      font-weight: 700;
+    }
+
+    .lil-gui .controller.boolean .display {
+      background: #4c4c4c;
+    }
+
+    .lil-gui .controller.function .widget {
+      background: #3f3f3f;
+    }
+
+    .lil-gui .controller.function:hover .widget {
+      background: #4d4d4d;
     }
   </style>
 </head>
