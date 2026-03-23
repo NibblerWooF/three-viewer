@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BAJI Viewer</title>
+  <link rel="icon" href="data:," />
   <style>
     :root {
       color-scheme: light;
@@ -203,21 +204,35 @@
     }
 
     function loadEnvironmentMap() {
-      const exrLoader = new THREE.EXRLoader();
-      exrLoader.load(
-        './hdr/hdr.exr',
-        (texture) => {
-          const environmentMap = pmremGenerator.fromEquirectangular(texture).texture;
-          scene.environment = environmentMap;
-          scene.background = environmentMap;
-          texture.dispose();
-          pmremGenerator.dispose();
-        },
-        undefined,
-        (error) => {
-          console.error('HDR 加载失败:', error);
+      try {
+        if (typeof THREE.EXRLoader !== 'function') {
+          console.warn('EXRLoader 未加载，跳过 HDR 环境贴图。');
+          return;
         }
-      );
+
+        const exrLoader = new THREE.EXRLoader();
+        exrLoader.load(
+          './hdr/hdr.exr',
+          (texture) => {
+            try {
+              const environmentMap = pmremGenerator.fromEquirectangular(texture).texture;
+              scene.environment = environmentMap;
+              scene.background = environmentMap;
+            } catch (error) {
+              console.error('HDR 贴图转换失败:', error);
+            } finally {
+              texture.dispose();
+              pmremGenerator.dispose();
+            }
+          },
+          undefined,
+          (error) => {
+            console.error('HDR 加载失败:', error);
+          }
+        );
+      } catch (error) {
+        console.error('HDR 初始化失败:', error);
+      }
     }
 
     loadEnvironmentMap();
