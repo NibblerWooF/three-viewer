@@ -2,124 +2,493 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BAJI Viewer</title>
   <style>
+    :root {
+      color-scheme: light;
+      --bg-main: #d9d9d9;
+      --bg-soft: #ececec;
+      --panel-bg: rgba(255, 255, 255, 0.78);
+      --panel-border: rgba(0, 0, 0, 0.08);
+      --text-main: #1c2430;
+      --text-sub: #576273;
+      --accent: #2e6ea6;
+      --error: #ff7b7b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     html, body {
       margin: 0;
       height: 100%;
       overflow: hidden;
-      background: #000;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.6), transparent 38%),
+        linear-gradient(180deg, var(--bg-soft), var(--bg-main));
+      color: var(--text-main);
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .hud {
+      position: fixed;
+      left: 16px;
+      bottom: 16px;
+      z-index: 10;
+      max-width: min(420px, calc(100vw - 32px));
+      padding: 14px 16px;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      pointer-events: none;
+    }
+
+    .hud-title {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .hud-text {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-sub);
+    }
+
+    .hud-text strong {
+      color: var(--accent);
+    }
+
+    .hud-text.error {
+      color: var(--error);
+    }
+
+    .lil-gui.root {
+      --background-color: rgba(255, 255, 255, 0.86);
+      --title-background-color: rgba(240, 240, 240, 0.98);
+      --title-text-color: #1c2430;
+      --widget-color: #4c4c4c;
+      --hover-color: #5a5a5a;
+      --focus-color: #2e6ea6;
+      --text-color: #1c2430;
+      --number-color: #2e6ea6;
+      --string-color: #2e6ea6;
+      --font-size: 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .lil-gui {
+      color: #1c2430;
+    }
+
+    .lil-gui .title {
+      color: #1c2430;
+      font-weight: 700;
+      opacity: 1;
+    }
+
+    .lil-gui .name {
+      color: #1c2430;
+      font-weight: 600;
+      opacity: 1;
+    }
+
+    .lil-gui .controller {
+      color: #1c2430;
+    }
+
+    .lil-gui .controller * {
+      opacity: 1;
+    }
+
+    .lil-gui .controller.disabled,
+    .lil-gui .controller.disabled * {
+      opacity: 1 !important;
+    }
+
+    .lil-gui .folder .title,
+    .lil-gui .folder .name,
+    .lil-gui .controller .name {
+      color: #1c2430 !important;
+      opacity: 1 !important;
+      text-shadow: none;
+    }
+
+    .lil-gui .controller.boolean .name,
+    .lil-gui .controller.function .name,
+    .lil-gui .controller.option .name,
+    .lil-gui .controller.number .name {
+      color: #1c2430 !important;
+    }
+
+    .lil-gui .controller.option .display,
+    .lil-gui input,
+    .lil-gui select,
+    .lil-gui button {
+      color: #ffffff;
+    }
+
+    .lil-gui button {
+      font-weight: 700;
+    }
+
+    .lil-gui .controller.boolean .display {
+      background: #4c4c4c;
+    }
+
+    .lil-gui .controller.function .widget {
+      background: #3f3f3f;
+    }
+
+    .lil-gui .controller.function:hover .widget {
+      background: #4d4d4d;
     }
   </style>
 </head>
 <body>
+  <div class="hud">
+    <p class="hud-title">BAJI Viewer</p>
+    <p id="statusText" class="hud-text">正在加载模型...</p>
+  </div>
 
-<script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://unpkg.com/three@0.128.0/examples/js/loaders/EXRLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19/dist/lil-gui.umd.min.js"></script>
 
-<script>
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  <script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd9d9d9);
 
-  const camera = new THREE.PerspectiveCamera(
-    45,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-  camera.position.set(0, 1, 5);
+    const statusText = document.getElementById('statusText');
+    const clock = new THREE.Clock();
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  document.body.appendChild(renderer.domElement);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
 
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
-  scene.add(hemiLight);
-
-  const dirLight = new THREE.DirectionalLight(0xffffff, 2);
-  dirLight.position.set(3, 5, 2);
-  scene.add(dirLight);
-
-  let model = null;
-
-  const loader = new THREE.GLTFLoader();
-  loader.load(
-    './models/baji.glb',
-    function (gltf) {
-      model = gltf.scene;
-      scene.add(model);
-
-      const box = new THREE.Box3().setFromObject(model);
-      const center = box.getCenter(new THREE.Vector3());
-      model.position.sub(center);
-    },
-    undefined,
-    function (error) {
-      console.error('GLB 加载失败：', error);
-    }
-  );
-
-  const gui = new lil.GUI({ width: 320 });
-  gui.domElement.style.transform = 'scale(1.25)';
-  gui.domElement.style.transformOrigin = 'top right';
-  gui.domElement.style.background = 'rgba(0,0,0,0.85)';
-
-  const params = {
-    rotationY: 0,
-    rotationX: 0,
-    posX: 0,
-    posY: 0,
-    posZ: 0,
-    scale: 1,
-    cameraZ: 5,
-    cameraY: 1
-  };
-
-  const modelFolder = gui.addFolder('模型');
-  modelFolder.add(params, 'rotationY', -Math.PI, Math.PI, 0.01);
-  modelFolder.add(params, 'rotationX', -Math.PI, Math.PI, 0.01);
-  modelFolder.add(params, 'posX', -5, 5, 0.01);
-  modelFolder.add(params, 'posY', -5, 5, 0.01);
-  modelFolder.add(params, 'posZ', -5, 5, 0.01);
-  modelFolder.add(params, 'scale', 0.1, 5, 0.01);
-  modelFolder.open();
-
-  const cameraFolder = gui.addFolder('相机');
-  cameraFolder.add(params, 'cameraZ', 1, 10, 0.01);
-  cameraFolder.add(params, 'cameraY', -5, 5, 0.01);
-  cameraFolder.open();
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    if (model) {
-      model.rotation.y = params.rotationY;
-      model.rotation.x = params.rotationX;
-      model.position.set(params.posX, params.posY, params.posZ);
-      model.scale.setScalar(params.scale);
-    }
-
-    camera.position.z = params.cameraZ;
-    camera.position.y = params.cameraY;
-
-    controls.update();
-    renderer.render(scene, camera);
-  }
-
-  animate();
-
-  window.addEventListener('resize', function () {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-</script>
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    setRendererColorSpace(renderer);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+    document.body.appendChild(renderer.domElement);
 
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+
+    function setRendererColorSpace(targetRenderer) {
+      if ('outputEncoding' in targetRenderer && THREE.sRGBEncoding) {
+        targetRenderer.outputEncoding = THREE.sRGBEncoding;
+      }
+    }
+
+    function loadEnvironmentMap() {
+      const exrLoader = new THREE.EXRLoader();
+      exrLoader.load(
+        './hdr/hdr.exr',
+        (texture) => {
+          const environmentMap = pmremGenerator.fromEquirectangular(texture).texture;
+          scene.environment = environmentMap;
+          scene.background = environmentMap;
+          texture.dispose();
+          pmremGenerator.dispose();
+        },
+        undefined,
+        (error) => {
+          console.error('HDR 加载失败:', error);
+        }
+      );
+    }
+
+    loadEnvironmentMap();
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.target.set(0, 1, 0);
+
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xcfcfcf, 1.65);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff8ee, 1.1);
+    dirLight.position.set(4, 6, 5);
+    scene.add(dirLight);
+
+    const fillLight = new THREE.DirectionalLight(0xe9eef5, 0.55);
+    fillLight.position.set(-4, 3, -2);
+    scene.add(fillLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
+
+    let modelRoot = null;
+    let centeredRoot = null;
+    let mixer = null;
+    let activeAction = null;
+    let animationClips = [];
+    let clipsReady = false;
+
+    const params = {
+      modelPath: './models/baji.glb',
+      rotationX: 0,
+      rotationY: 0,
+      rotationZ: 0,
+      posX: 0,
+      posY: 0,
+      posZ: 0,
+      scale: 1,
+      autoRotate: false,
+      autoRotateSpeed: 0.01,
+      cameraX: 0,
+      cameraY: 1.2,
+      cameraZ: 5,
+      lightIntensity: 1.1,
+      hemiIntensity: 1.65,
+      ambientIntensity: 0.85,
+      fillIntensity: 0.55,
+      animation: '无动画',
+      play: true,
+      loop: true,
+      speed: 1,
+      resetModel: () => {
+        params.rotationX = 0;
+        params.rotationY = 0;
+        params.rotationZ = 0;
+        params.posX = 0;
+        params.posY = 0;
+        params.posZ = 0;
+        params.scale = 1;
+        params.autoRotate = false;
+        syncDisplay(modelControllers);
+      },
+      resetCamera: () => {
+        params.cameraX = 0;
+        params.cameraY = 1.2;
+        params.cameraZ = 5;
+        controls.target.set(0, 1, 0);
+        controls.update();
+        syncDisplay(cameraControllers);
+      }
+    };
+
+    const gui = new lil.GUI({ title: '控制面板', width: 340 });
+    gui.domElement.style.marginTop = '10px';
+
+    const modelFolder = gui.addFolder('模型');
+    const modelControllers = [
+      modelFolder.add(params, 'rotationX', -Math.PI, Math.PI, 0.01).name('旋转 X'),
+      modelFolder.add(params, 'rotationY', -Math.PI, Math.PI, 0.01).name('旋转 Y'),
+      modelFolder.add(params, 'rotationZ', -Math.PI, Math.PI, 0.01).name('旋转 Z'),
+      modelFolder.add(params, 'posX', -5, 5, 0.01).name('位置 X'),
+      modelFolder.add(params, 'posY', -5, 5, 0.01).name('位置 Y'),
+      modelFolder.add(params, 'posZ', -5, 5, 0.01).name('位置 Z'),
+      modelFolder.add(params, 'scale', 0.1, 5, 0.01).name('缩放'),
+      modelFolder.add(params, 'autoRotate').name('自动旋转'),
+      modelFolder.add(params, 'autoRotateSpeed', -0.08, 0.08, 0.001).name('旋转速度')
+    ];
+    modelFolder.add(params, 'resetModel').name('重置模型');
+    modelFolder.open();
+
+    const cameraFolder = gui.addFolder('相机');
+    const cameraControllers = [
+      cameraFolder.add(params, 'cameraX', -10, 10, 0.01).name('相机 X'),
+      cameraFolder.add(params, 'cameraY', -5, 10, 0.01).name('相机 Y'),
+      cameraFolder.add(params, 'cameraZ', 1, 20, 0.01).name('相机 Z')
+    ];
+    cameraFolder.add(params, 'resetCamera').name('重置相机');
+    cameraFolder.open();
+
+    const lightFolder = gui.addFolder('光照');
+    lightFolder.add(params, 'lightIntensity', 0, 4, 0.01).name('主光');
+    lightFolder.add(params, 'fillIntensity', 0, 3, 0.01).name('补光');
+    lightFolder.add(params, 'hemiIntensity', 0, 4, 0.01).name('半球光');
+    lightFolder.add(params, 'ambientIntensity', 0, 3, 0.01).name('环境光');
+
+    const animationFolder = gui.addFolder('动画');
+    const animationStateController = animationFolder
+      .add(params, 'animation', ['无动画'])
+      .name('片段')
+      .onChange((clipName) => {
+        if (!clipsReady) return;
+        playClipByName(clipName);
+      });
+    animationFolder.add(params, 'play').name('播放').onChange(updatePlaybackState);
+    animationFolder.add(params, 'loop').name('循环').onChange(updatePlaybackState);
+    animationFolder.add(params, 'speed', 0, 3, 0.01).name('速度').onChange(updatePlaybackState);
+    animationFolder.open();
+
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      params.modelPath,
+      (gltf) => {
+        animationClips = gltf.animations || [];
+
+        centeredRoot = new THREE.Group();
+        modelRoot = gltf.scene;
+        centeredRoot.add(modelRoot);
+        scene.add(centeredRoot);
+
+        centerModel(modelRoot);
+        fitCameraToModel(modelRoot);
+        buildAnimationControls(animationClips);
+
+        statusText.textContent = animationClips.length
+          ? `模型加载完成，检测到 ${animationClips.length} 个动画片段。`
+          : '模型加载完成，未检测到动画片段。';
+      },
+      (event) => {
+        if (!event.total) return;
+        const progress = ((event.loaded / event.total) * 100).toFixed(0);
+        statusText.textContent = `正在加载模型... ${progress}%`;
+      },
+      (error) => {
+        console.error('GLB 加载失败:', error);
+        statusText.textContent = '模型加载失败，请检查 models/baji.glb 路径。';
+        statusText.classList.add('error');
+      }
+    );
+
+    function centerModel(root) {
+      const box = new THREE.Box3().setFromObject(root);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      root.position.sub(center);
+      root.position.y += size.y * 0.5;
+      controls.target.set(0, size.y * 0.5, 0);
+      controls.update();
+    }
+
+    function fitCameraToModel(root) {
+      const box = new THREE.Box3().setFromObject(root);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      params.cameraX = 0;
+      params.cameraY = Math.max(0.8, size.y * 0.6);
+      params.cameraZ = Math.max(3, maxDim * 2.2);
+      syncDisplay(cameraControllers);
+    }
+
+    function buildAnimationControls(clips) {
+      if (!clips.length || !modelRoot) {
+        clipsReady = false;
+        params.animation = '无动画';
+        animationStateController.options(['无动画']);
+        animationStateController.updateDisplay();
+        return;
+      }
+
+      mixer = new THREE.AnimationMixer(modelRoot);
+      clipsReady = true;
+
+      const clipNames = clips.map((clip, index) => clip.name || `动画 ${index + 1}`);
+      params.animation = clipNames[0];
+      animationStateController.options(clipNames);
+      animationStateController.updateDisplay();
+      playClipByName(params.animation);
+    }
+
+    function playClipByName(clipName) {
+      if (!mixer || !animationClips.length) return;
+
+      const clipIndex = animationClips.findIndex((clip, index) => {
+        const currentName = clip.name || `动画 ${index + 1}`;
+        return currentName === clipName;
+      });
+
+      if (clipIndex < 0) return;
+
+      const clip = animationClips[clipIndex];
+      const nextAction = mixer.clipAction(clip);
+
+      if (activeAction && activeAction !== nextAction) {
+        activeAction.fadeOut(0.2);
+      }
+
+      activeAction = nextAction;
+      activeAction.reset();
+      activeAction.fadeIn(0.2);
+      updatePlaybackState();
+      activeAction.play();
+    }
+
+    function updatePlaybackState() {
+      if (!activeAction) return;
+      activeAction.paused = !params.play;
+      activeAction.setLoop(
+        params.loop ? THREE.LoopRepeat : THREE.LoopOnce,
+        params.loop ? Infinity : 1
+      );
+      activeAction.clampWhenFinished = !params.loop;
+      activeAction.enabled = true;
+      activeAction.timeScale = params.speed;
+    }
+
+    function syncDisplay(controllers) {
+      controllers.forEach((controller) => controller.updateDisplay());
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = clock.getDelta();
+
+      if (centeredRoot) {
+        centeredRoot.rotation.x = params.rotationX;
+        centeredRoot.rotation.y = params.rotationY;
+        centeredRoot.rotation.z = params.rotationZ;
+
+        if (params.autoRotate) {
+          centeredRoot.rotation.y += params.autoRotateSpeed;
+          params.rotationY = centeredRoot.rotation.y;
+          modelControllers[1].updateDisplay();
+        }
+
+        centeredRoot.position.set(params.posX, params.posY, params.posZ);
+        centeredRoot.scale.setScalar(params.scale);
+      }
+
+      camera.position.set(params.cameraX, params.cameraY, params.cameraZ);
+      dirLight.intensity = params.lightIntensity;
+      fillLight.intensity = params.fillIntensity;
+      hemiLight.intensity = params.hemiIntensity;
+      ambientLight.intensity = params.ambientIntensity;
+
+      if (mixer && params.play) {
+        mixer.update(delta);
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
 </body>
 </html>
